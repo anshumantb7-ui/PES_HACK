@@ -6,6 +6,14 @@ import subprocess
 import requests
 from pathlib import Path
 
+# Ensure UTF-8 output on Windows consoles
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 # Paths & Settings
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOCAL_ADB = BASE_DIR / "tools" / "platform-tools" / "adb.exe"
@@ -48,15 +56,15 @@ def wait_for_device():
         serial, status = device_line.split()[0], device_line.split()[1]
 
         if status == "unauthorized":
-            print(f"\n⚠️  Phone B ({serial}) is UNAUTHORIZED!")
-            print("   👉 Check Phone B's screen and tap 'Always allow from this computer' -> OK.")
+            print(f"\n[!] Phone B ({serial}) is UNAUTHORIZED!")
+            print("   -> Check Phone B's screen and tap 'Always allow from this computer' -> OK.")
             time.sleep(3)
             continue
         elif status == "device":
-            print(f"\n✅ Phone B connected & authorized! (Serial: {serial})\n")
+            print(f"\n[OK] Phone B connected & authorized! (Serial: {serial})\n")
             return serial
         else:
-            print(f"\n⚠️  Phone B in state: {status}. Waiting...")
+            print(f"\n[!] Phone B in state: {status}. Waiting...")
             time.sleep(3)
 
 
@@ -99,9 +107,10 @@ def parse_content_query_rows(output: str) -> list[dict]:
     return records
 
 
-def fetch_latest_sms_from_phone() -> list[dict]:
+def fetch_latest_sms_from_phone(limit: int = 5) -> list[dict]:
     """Queries Phone B's SMS inbox via ADB content provider."""
-    # Query inbox sorted by date descending, limit to latest 5
+    # Projection must be colon-separated for Android content query
+    # Sort order must be quoted or formatted as 'date DESC'
     args = [
         "shell",
         "content",
@@ -109,18 +118,20 @@ def fetch_latest_sms_from_phone() -> list[dict]:
         "--uri",
         "content://sms/inbox",
         "--projection",
-        "_id,address,body,date",
+        "_id:address:body:date",
         "--sort",
-        "date DESC",
+        "'date DESC'",
     ]
     res = run_adb_command(args)
     if res.returncode != 0:
         if "Permission Denial" in res.stderr:
-            print("❌ Permission denied by Phone B to read SMS!")
-            print("   👉 If using Xiaomi/Redmi/Poco: Enable 'USB debugging (Security settings)' in Developer Options.")
-            print("   👉 On standard Android: Ensure USB debugging is granted.")
+            print("[ERROR] Permission denied by Phone B to read SMS!")
+            print("   -> If using Xiaomi/Redmi/Poco: Enable 'USB debugging (Security settings)' in Developer Options.")
+            print("   -> On standard Android: Ensure USB debugging is granted.")
         return []
-    return parse_content_query_rows(res.stdout)
+    # Return top N messages
+    records = parse_content_query_rows(res.stdout)
+    return records[:limit]
 
 
 def forward_to_fastapi(record: dict) -> bool:
@@ -141,13 +152,13 @@ def forward_to_fastapi(record: dict) -> bool:
         if resp.status_code == 200:
             data = resp.json()
             status_text = data.get("status", "ok")
-            print(f"🚀 [FORWARDED] SMS #{record['id']} from {record['address']} -> Backend response: {status_text.upper()}")
+            print(f"[FORWARDED] SMS #{record['id']} from {record['address']} -> Backend: {status_text.upper()}")
             return True
         else:
-            print(f"❌ Backend returned status {resp.status_code}: {resp.text}")
+            print(f"[ERROR] Backend returned status {resp.status_code}: {resp.text}")
             return False
     except Exception as e:
-        print(f"❌ Failed to reach backend at {BACKEND_URL}: {e}")
+        print(f"[ERROR] Failed to reach backend at {BACKEND_URL}: {e}")
         return False
 
 
@@ -174,7 +185,7 @@ def main():
     else:
         print("   Inbox currently empty or no messages found. Waiting for incoming SMS...")
 
-    print("\n🟢 LISTENER ACTIVE: Send an SMS from Phone A to Phone B now!")
+    print("\n[ACTIVE] LISTENER ACTIVE: Send an SMS from Phone A to Phone B now!")
     print("----------------------------------------------------------------------")
 
     # 3. Continuous Polling Loop
@@ -185,7 +196,7 @@ def main():
                 msg_id = msg["id"]
                 if msg_id not in seen_ids:
                     seen_ids.add(msg_id)
-                    print(f"\n📩 [NEW SMS DETECTED ON PHONE B]")
+                    print(f"\n[NEW SMS DETECTED ON PHONE B]")
                     print(f"   Sender : {msg['address']}")
                     print(f"   Body   : {msg['body']}")
                     forward_to_fastapi(msg)
@@ -193,10 +204,10 @@ def main():
             time.sleep(POLL_INTERVAL)
 
         except KeyboardInterrupt:
-            print("\n👋 Stopping ADB Bridge listener.")
+            print("\n[STOP] Stopping ADB Bridge listener.")
             break
         except Exception as e:
-            print(f"⚠️ Listener error: {e}")
+            print(f"[WARN] Listener error: {e}")
             time.sleep(POLL_INTERVAL)
 
 
