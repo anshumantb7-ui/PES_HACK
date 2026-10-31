@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#c62828" />
+    <meta name="description" content="Send an SOS text with your GPS location, even with no mobile data." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="RESQ SOS" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>RESQ SOS</title>
+  </head>
+  <body>
+    <main>
+      <h1>RESQ Emergency SOS</h1>
+
+      <label for="type">Emergency type</label>
+      <select id="type"></select>
+
+      <label for="status">Your status</label>
+      <select id="status"></select>
+
+      <p id="coords" class="meta" aria-live="polite"></p>
+      <button id="locate" class="secondary" type="button">Update my location</button>
+
+      <p class="meta">Message that will be texted:</p>
+      <pre id="preview"></pre>
+      <p id="meta" class="meta"></p>
+
+      <button id="sos" class="sos" type="button" disabled>SEND SOS</button>
+      <button id="nogps" class="secondary" type="button" hidden>Send without location</button>
+      <p class="hint">Your messaging app opens with the text ready. Press Send there.</p>
+
+      <section class="device" aria-label="This phone">
+        <p id="ready" class="ready" role="status"></p>
+        <ul id="checklist" class="checklist"></ul>
+        <dl>
+          <dt>Network</dt>
+          <dd id="st-network"></dd>
+          <dt>Works offline</dt>
+          <dd id="st-cache"></dd>
+          <dt>App</dt>
+          <dd id="st-app"></dd>
+        </dl>
+        <button id="install" class="secondary" type="button" hidden>Install app</button>
+        <p id="ios-hint" class="hint" hidden>
+          On iPhone: tap the Share button, then Add to Home Screen.
+        </p>
+      </section>
+
+      <!-- dev:start -->
+      <section id="dev" class="dev">
+        <strong>Dev panel (only in npm run dev, removed from the build)</strong>
+        <label><input id="useTest" type="checkbox" /> Use test coordinates instead of GPS</label>
+        <label for="lat">Test latitude</label>
+        <input id="lat" type="number" step="any" value="12.9345" />
+        <label for="lon">Test longitude</label>
+        <input id="lon" type="number" step="any" value="77.6123" />
+        <label for="platform">SMS link style</label>
+        <select id="platform">
+          <option value="android">android (?body=)</option>
+          <option value="ios">ios (&amp;body=)</option>
+        </select>
+        <p class="meta">Generated link:</p>
+        <pre id="link"></pre>
+      </section>
+      <!-- dev:end -->
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
