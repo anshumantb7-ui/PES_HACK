@@ -157,7 +157,7 @@ def format_record(r: RawSMS) -> RecordItem:
 # ──────────────────────────────────────────────────────────────
 # Endpoint 1: POST /api/query-offline (Primary Orchestrator Tool)
 # ──────────────────────────────────────────────────────────────
-@app_post := bridge_router.post(
+@bridge_router.post(
     "/query-offline",
     response_model=OfflineQueryResponse,
     summary="Query offline disaster records using structured agent filters",
