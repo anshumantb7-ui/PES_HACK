@@ -65,6 +65,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ──────────────────────────────────────────────────────────────
+# Online MAS Orchestrator API Bridge Router
+# Exposes POST /api/query-offline, GET /api/records, GET /api/bridge/status
+# ──────────────────────────────────────────────────────────────
+from backend.api_bridge import bridge_router
+app.include_router(bridge_router)
+
 
 # ──────────────────────────────────────────────────────────────
 # Health

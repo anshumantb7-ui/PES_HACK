@@ -12,6 +12,10 @@ class Settings(BaseModel):
     # Secret header token expected from Phone B forwarder app
     # Can be provided in 'X-RESQ-Secret' or 'Authorization: Bearer <secret>'
     SECRET_TOKEN: str = os.getenv("RESQ_SECRET_TOKEN", "resq-secret-key-2026")
+
+    # API key for online MAS (Multi-Agent System) Orchestrator bridge
+    # Can be provided in 'Authorization: Bearer <key>' or 'X-API-Key: <key>'
+    MAS_API_KEY: str = os.getenv("RESQ_MAS_API_KEY", "resq-mas-bridge-secret-2026")
     
     # Database URL: defaults to PostgreSQL, falls back to SQLite if unreachable
     DATABASE_URL: str = os.getenv(
